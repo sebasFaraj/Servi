@@ -12,7 +12,7 @@ import ProviderMatches from './components/providers/ProviderMatches';
 import ProviderProfile from './components/providers/ProviderProfile';
 import ServiGuy from './components/booking/ServiGuy';
 import ProvidersLanding from './components/providers/ProvidersLanding';
-import ProviderSignup from './components/providers/ProviderSignup';
+import ProviderSignup from './components/auth/ProviderSignup';
 import ProviderSuccess from './components/providers/ProviderSuccess';
 import BookingSuccessScreen from './components/booking/BookingSuccessScreen';
 import AccountLayout from './components/account/AccountLayout';
@@ -41,6 +41,7 @@ const App = () => {
               {/* Auth Routes */}
               <Route path="/auth/signin" element={<SignIn />} />
               <Route path="/auth/signup" element={<UserSignup />} />
+              <Route path="/auth/provider/signup" element={<ProviderSignup />} />
               <Route path="/auth/provider/signin" element={<ProviderSignIn />} />
 
               {/* Main Layout Routes */}
@@ -61,11 +62,10 @@ const App = () => {
                 
                 {/* Provider Routes */}
                 <Route path="/providers" element={<ProvidersLanding />} />
-                <Route path="/provider/signup" element={<ProviderSignup />} />
                 <Route path="/provider/success" element={<ProviderSuccess />} />
                 <Route path="/provider/dashboard" element={<ProviderDashboard />} />
                 
-                {/* Account Routes */}
+                {/* User Account Routes */}
                 <Route path="/account" element={<AccountLayout />}>
                   <Route path="profile" element={<Profile />} />
                   <Route path="bookings" element={<Bookings />} />
@@ -75,6 +75,7 @@ const App = () => {
                   <Route path="about" element={<About />} />
                 </Route>
                 
+                {/*AI Agent*/}
                 <Route path="/serviguy" element={<ServiGuy />} />
               </Route>
             </Routes>

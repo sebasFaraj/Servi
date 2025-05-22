@@ -11,6 +11,7 @@ const BASE_RATES = {
 const calculateTotalDistance = (stops: Stop[]): number => {
   // In a real app, we would use a mapping service to calculate actual distances
   // For now, estimate 5 miles between each stop
+  //TODO: Add real pricing
   return (stops.length - 1) * 5;
 };
 

@@ -98,8 +98,10 @@ const ProviderSignup = () => {
     }
   };
 
+  //TODO: Add further Form Validation (phone #, proper email checking, etc)
   const validateStep = () => {
     switch (currentStep) {
+      //TODO Add Phone validation and birthdate check (over 18, birthdate being in the future, etc.)
       case 1:
         if (!formData.name || !formData.phone || !formData.birthdate) {
           alert('Please fill in all required fields');
@@ -110,6 +112,8 @@ const ProviderSignup = () => {
           return false;
         }
         break;
+
+      //TODO Address and Business Verification
       case 2:
         if (!formData.address) {
           alert('Please enter your address');
@@ -137,7 +141,7 @@ const ProviderSignup = () => {
         }
         break;
       case 4:
-        // For demo purposes, we'll skip document validation
+        // TODO ADD Document Validation
         if (!formData.acceptedTerms) {
           alert('Please accept the terms and conditions');
           return false;
@@ -147,6 +151,12 @@ const ProviderSignup = () => {
     return true;
   };
 
+  //TODO: Handle API call for creating a Provider
+  const submitForm = () => {
+    return
+  }
+
+  //Handler function for going onto next step
   const handleNext = () => {
     if (validateStep()) {
       if (currentStep < 4) {
@@ -176,6 +186,7 @@ const ProviderSignup = () => {
           </p>
         </div>
 
+    {/*Number Navbar*/}
         <div className="flex justify-between mb-8">
           {[1, 2, 3, 4].map((step) => (
             <div
@@ -203,7 +214,9 @@ const ProviderSignup = () => {
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
-          {currentStep === 1 && (
+          {/*Section 1*/}
+          {currentStep === 1 && 
+          (
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -260,6 +273,7 @@ const ProviderSignup = () => {
             </div>
           )}
 
+          {/*Section 2*/}
           {currentStep === 2 && (
             <div className="space-y-6">
               <div>
@@ -352,6 +366,7 @@ const ProviderSignup = () => {
             </div>
           )}
 
+          {/*Section 3*/}
           {currentStep === 3 && (
             <div className="space-y-6">
               <div>
@@ -479,14 +494,14 @@ const ProviderSignup = () => {
             </div>
           )}
 
+
+          {/*Section 4*/}
           {currentStep === 4 && (
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-4">Required Documents</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  For demo purposes, you can click "Upload" to simulate document submission.
-                </p>
                 <div className="space-y-4">
+                  {/*Map for each Document Type*/}
                   {Object.entries(formData.documents).map(([docType, isUploaded]) => (
                     <div key={docType} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <div className="flex items-center">
@@ -500,6 +515,8 @@ const ProviderSignup = () => {
                       </div>
                       <button
                         type="button"
+
+                        //TODO: Implement Back-End Check Here
                         onClick={() => setFormData({
                           ...formData,
                           documents: {
@@ -551,17 +568,15 @@ const ProviderSignup = () => {
             <button
               type="button"
               onClick={handleBack}
-              className="px-6 py-2 text-gray-600 dark:text-gray-300 hover:text-teal-600"
-            >
+              className="px-6 py-2 text-gray-600 dark:text-gray-300 hover:text-teal-600">
               Back
             </button>
           )}
           <button
             type="button"
-            onClick={handleNext}
+            onClick = {currentStep === 4 ? submitForm : handleNext}
             className="ml-auto flex items-center px-6 py-2 bg-teal-600 text-white rounded-lg 
-                   hover:bg-teal-700"
-          >
+                   hover:bg-teal-700">
             {currentStep === 4 ? 'Submit Application' : 'Next'}
             <ChevronRight className="w-5 h-5 ml-2" />
           </button>

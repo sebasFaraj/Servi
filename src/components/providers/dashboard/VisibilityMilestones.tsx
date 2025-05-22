@@ -2,6 +2,8 @@ import React from 'react';
 import { Star, Award, Trophy, Rocket, Users, DollarSign, Check } from 'lucide-react';
 
 const VisibilityMilestones = () => {
+  //TODO: Figure out how to reach certain tiers, based on what information
+  //Will this information be stored, or will they be calculated on the fly?
   const tiers = [
     {
       id: 1,

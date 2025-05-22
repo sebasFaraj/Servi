@@ -9,7 +9,14 @@ interface Task {
   status: 'pending' | 'completed';
 }
 
+//TODO: Handle Task Completion with Backend
+const handleTaskCompletion = () => {
+  return
+}
+
 const TasksOverview = () => {
+
+  //TODO: Fix Task Data Struct
   const tasks: Task[] = [
     {
       id: '1',
@@ -57,7 +64,10 @@ const TasksOverview = () => {
               <button className="flex items-center px-4 py-2 text-sm font-medium text-teal-600 
                              bg-teal-100 rounded-lg hover:bg-teal-200 dark:bg-teal-900/30 
                              dark:text-teal-400 dark:hover:bg-teal-900/50">
-                <Check className="w-4 h-4 mr-2" />
+                <Check className="w-4 h-4 mr-2" 
+                onClick = {handleTaskCompletion}
+                />
+                
                 Complete
               </button>
             </div>

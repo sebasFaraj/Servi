@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, Calendar, MapPin, Clock, CreditCard } from 'lucide-react';
 import { useBookings } from '../../hooks/useBookings';
 
+
+//TODO: Decide what this screen does, where is the booking being handled exactly?
 const BookingSuccessScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();

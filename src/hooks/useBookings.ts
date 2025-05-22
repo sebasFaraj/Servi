@@ -15,7 +15,7 @@ export function useBookings() {
         if (saved) {
           setBookings(JSON.parse(saved));
         } else {
-          // Initialize with mock data
+          // TODO: Figure out booking data struct
           localStorage.setItem('bookings', JSON.stringify(mockBookings));
           setBookings(mockBookings);
         }
@@ -29,6 +29,7 @@ export function useBookings() {
     loadBookings();
   }, []);
 
+  //TODO: Change function to work with back-end instead of just in local storage
   const saveBookings = (updatedBookings: Booking[]) => {
     try {
       localStorage.setItem('bookings', JSON.stringify(updatedBookings));

@@ -31,7 +31,7 @@ const CommunityChoice = () => {
             </p>
             <div className="space-y-3">
               <button
-                onClick={() => navigate('/provider/signup')}
+                onClick={() => navigate('/auth/provider/signup')}
                 className="w-full bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 
                          transition-colors flex items-center justify-center"
               >

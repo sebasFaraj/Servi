@@ -66,7 +66,9 @@ const RequirementsForm = () => {
     if (currentStep < 3) {
       setCurrentStep(prev => prev + 1);
       setError(null);
-    } else {
+    } 
+    //TODO: If we're taking users to this page after matches are found, we need to pass information along and have /matches handle it
+    else {
       navigate('/book/driver/matches', { 
         state: { requirements } 
       });
@@ -230,6 +232,9 @@ const RequirementsForm = () => {
               </button>
             </div>
 
+            {/*TODO: Change implementation so that users can't request a druver for a shorter/longer time than needed */}
+            {/*This is implemented when going between cities, but not when the ride is inside the city */}
+            {/*TODO: Add ability to add multiple stops, right now you can only go from A -> B */}
             {!requirements.isBetweenCities && (
               <div>
                 <h3 className="text-lg font-semibold mb-4">How long do you need the driver?</h3>

@@ -3,6 +3,9 @@ import { Camera, Save } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import UserAvatar from '../user/UserAvatar';
 
+
+
+//TODO: Fix workflow of the page, should this page just be to change the profile?
 const Profile = () => {
   const { user, updateProfile, updateAvatar, error: authError } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
@@ -58,9 +61,9 @@ const Profile = () => {
 
   const error = formError || authError;
 
-  if (!user) {
-    return <div>Please sign in to view your profile.</div>;
-  }
+  // if (!user) {
+  //   return <div>Please sign in to view your profile.</div>;
+  // }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 dark:text-white">

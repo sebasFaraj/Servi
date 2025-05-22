@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bell, Lock, Globe, Moon } from 'lucide-react';
 
+//TODO: Attatch settings data_struct to the user and make changes actually change
 const Settings = () => {
   const [settings, setSettings] = useState({
     notifications: true,
@@ -40,6 +41,8 @@ const Settings = () => {
             <Moon className="w-5 h-5 text-teal-600" />
             <span>Dark Mode</span>
           </div>
+
+          {/*TODO: Implement Dark Mode */}
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -56,6 +59,7 @@ const Settings = () => {
           </label>
         </div>
 
+        {/*Implement Language Changes */}
         <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
           <div className="flex items-center space-x-3">
             <Globe className="w-5 h-5 text-teal-600" />

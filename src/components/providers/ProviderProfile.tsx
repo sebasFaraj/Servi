@@ -5,6 +5,8 @@ import { useProvider } from '../../hooks/useProvider';
 import BookingConfirmationModal from '../booking/BookingConfirmationModal';
 import PaymentModal from '../booking/PaymentModal';
 
+
+//TODO: Needs to mesh with real Provider data, also needs to stay consistent
 const ProviderProfile = () => {
   const { id, serviceType } = useParams();
   const navigate = useNavigate();

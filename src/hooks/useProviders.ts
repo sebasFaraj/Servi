@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { Provider, ServiceType, ProviderFilters } from '../types/provider';
 
+//TODO: needs to be changed to be real data, again need to decide on Provider data struct
 export const mockProviders: Record<ServiceType, Provider[]> = {
   driver: [
     {

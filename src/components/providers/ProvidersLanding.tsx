@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, DollarSign, Calendar, Shield, ArrowRight } from 'lucide-react';
 
+//TODO: Routing should be changed from provider/success -> /services to prover/success -> /providers (this page)
+
 const ProvidersLanding = () => {
   const navigate = useNavigate();
 
@@ -28,6 +30,7 @@ const ProvidersLanding = () => {
     }
   ];
 
+  //TODO: Should be left as static, or should be changing constantly depending on people?
   const testimonials = [
     {
       name: "Sarah Johnson",

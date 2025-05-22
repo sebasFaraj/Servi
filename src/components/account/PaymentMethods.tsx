@@ -1,6 +1,7 @@
 import React from 'react';
 import { CreditCard, Plus } from 'lucide-react';
 
+//TODO: Needs to be changed completely in order to allow for back-end support
 const PaymentMethods = () => {
   return (
     <div className="space-y-6">

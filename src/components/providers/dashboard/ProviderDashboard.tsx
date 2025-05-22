@@ -8,6 +8,8 @@ import VisibilityMilestones from './VisibilityMilestones';
 const ProviderDashboard = () => {
   const navigate = useNavigate();
 
+  //TODO: Decide how to store stats, should these be stored in each provider?
+  //What is a visibility milestone
   const stats = {
     activeTasks: 2,
     earnings: 1250,

@@ -28,7 +28,9 @@ const UserSignup = () => {
         throw new Error('Passwords do not match');
       }
 
-      // Simulate API call
+      //TODO: Add real Form validation for each item
+
+      //TODO: Add Real API call to create a user in db 
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Navigate to services on success

@@ -29,6 +29,7 @@ const ProviderSuccess = () => {
             </ol>
           </div>
 
+          {/*TODO: Ensure proper routing is /services and not another dashboard. UX problem*/}
           <button
             onClick={() => navigate('/services')}
             className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition-colors"

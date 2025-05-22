@@ -13,6 +13,8 @@ const DashboardHeader = () => {
             Provider Dashboard
           </h1>
 
+          {/*Icons */}
+          {/*TODO: Add functionality for Icons, where should each icon take you? */}
           <div className="flex items-center space-x-4">
             <button className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 
                            dark:hover:text-gray-300">

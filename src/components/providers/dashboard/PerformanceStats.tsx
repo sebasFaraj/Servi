@@ -2,6 +2,8 @@ import React from 'react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
 const PerformanceStats = () => {
+
+  //Figure out performance data structure (where is this information coming from?)
   const performanceData = [
     { date: '1/1', rating: 4.5, earnings: 150 },
     { date: '1/2', rating: 4.8, earnings: 200 },
