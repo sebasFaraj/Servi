@@ -1,72 +1,76 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  User, Mail, Phone, MapPin, Building2, Calendar, 
+import {
+  User, Mail, Phone, MapPin, Building2, Calendar,
   FileText, Upload, ChevronRight, CircuitBoard,
-  Car, Sparkles, Clock, Check 
+  Car, Sparkles, Clock, Check
 } from 'lucide-react';
 
-interface FormData {
-  name: string;
-  email: string;
-  phone: string;
-  birthdate: string;
-  address: string;
-  providerType: 'individual' | 'business';
-  businessName?: string;
-  businessEmail?: string;
-  serviceType: 'driver' | 'cleaning';
-  bio: string;
-  motivation?: string;
-  availability: {
-    monday: boolean;
-    tuesday: boolean;
-    wednesday: boolean;
-    thursday: boolean;
-    friday: boolean;
-    saturday: boolean;
-    sunday: boolean;
-    timeSlots: {
-      morning: boolean;
-      afternoon: boolean;
-      evening: boolean;
-    };
-  };
-  documents: {
-    id: boolean;
-    passport: boolean;
-    criminalRecord: boolean;
-    certifications: boolean;
-  };
-  acceptedTerms: boolean;
+const API_BASE = 'http://localhost:3001';
+
+//Availability Slot schema
+interface Slot {
+  day: 0 | 1 | 2 | 3 | 4 | 5 | 6;          // 0 = Sunday … 6 = Saturday
+  start: string;                            // "HH:MM", 24-hour, zero-padded
+  end: string;
 }
+
+//
+interface ProviderFormData {
+  //Identity
+  firstName: string;
+  lastName: string;
+  email: string;                       // lower-cased later
+  phone: string;                       // "+504 ####-####"
+  password: string;
+  confirmPassword: string;
+
+  //Profile
+  birthdate: string;                       // ISO date string YYYY-MM-DD
+  address: string;
+  serviceType: 'Driver' | 'Cleaning';      // matches enum in schema
+  bio: string;
+
+  //Availability
+  availability: Slot[];
+
+  //Misc
+  providerType: 'individual' | 'business'; // UI only; not persisted
+  businessName?: string;                  // required iff providerType==="business"
+  businessEmail?: string;                  //          »»
+  documents?: {                            // client-side upload flags
+    id?: boolean;
+    passport?: boolean;
+    criminalRecord?: boolean;
+    certifications?: boolean;
+  };
+
+  acceptedTerms: boolean;                  // must be true to submit
+}
+
 
 const ProviderSignup = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
+  const [slotDraft, setSlotDraft] = useState<Slot>({
+    day: 1,
+    start: '',
+    end: ''
+  });
+  const [formData, setFormData] = useState<ProviderFormData>({
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
+    password: '',
+    confirmPassword: '',
     birthdate: '',
     address: '',
     providerType: 'individual',
-    serviceType: 'cleaning',
+    serviceType: 'Driver',
     bio: '',
-    availability: {
-      monday: false,
-      tuesday: false,
-      wednesday: false,
-      thursday: false,
-      friday: false,
-      saturday: false,
-      sunday: false,
-      timeSlots: {
-        morning: false,
-        afternoon: false,
-        evening: false
-      }
-    },
+    availability: [],
+
     documents: {
       id: false,
       passport: false,
@@ -102,13 +106,22 @@ const ProviderSignup = () => {
   const validateStep = () => {
     switch (currentStep) {
       //TODO Add Phone validation and birthdate check (over 18, birthdate being in the future, etc.)
-      case 1:
-        if (!formData.name || !formData.phone || !formData.birthdate) {
+      case 1: // Personal Info
+        if (!formData.firstName || !formData.lastName || !formData.phone || !formData.birthdate || !formData.email || !formData.password) {
+          console.log(formData);
           alert('Please fill in all required fields');
           return false;
         }
         if (!formData.phone.startsWith('+504') || formData.phone.length < 13) {
           alert('Please enter a valid Honduras phone number');
+          return false;
+        }
+        if (formData.password.length < 8) {
+          alert('Password must be at least 8 characters long');
+          return false;
+        }
+        if (formData.password !== formData.confirmPassword) {
+          alert('Passwords do not match');
           return false;
         }
         break;
@@ -129,14 +142,8 @@ const ProviderSignup = () => {
           alert('Please enter your bio');
           return false;
         }
-        // Check if at least one day is selected
-        const hasSelectedDay = Object.entries(formData.availability)
-          .filter(([key]) => key !== 'timeSlots')
-          .some(([_, value]) => value);
-        // Check if at least one time slot is selected
-        const hasSelectedTimeSlot = Object.values(formData.availability.timeSlots).some(value => value);
-        if (!hasSelectedDay || !hasSelectedTimeSlot) {
-          alert('Please select at least one day and time slot for availability');
+        if (formData.availability.length === 0) {
+          alert('Please add at least one availability slot');
           return false;
         }
         break;
@@ -151,10 +158,70 @@ const ProviderSignup = () => {
     return true;
   };
 
-  //TODO: Handle API call for creating a Provider
-  const submitForm = () => {
-    return
-  }
+  const submitForm = async () => {
+
+    //Final Validation
+    if (!validateStep()) return;
+
+    /* Build Payload as expected by Mongoose */
+    const {
+      confirmPassword,         // remove UI-only
+      providerType,            //    "
+      documents,               //    "
+      acceptedTerms,           //    "
+      businessName,            // optional UI field
+      businessEmail,           // optional UI field
+      ...serverFields          // everything else
+    } = formData;
+
+    /* lower-case & trim email*/
+    serverFields.email = serverFields.email.trim().toLowerCase();
+
+    try {
+      //Send request to backend
+      const res = await fetch(`${API_BASE}/indproviders/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(serverFields)
+      });
+
+      if (!res.ok) {
+        const { message } = await res.json();
+        alert(message ?? 'Signup failed');
+        return;
+      }
+
+      //Go to success page, else say error
+      navigate('/provider/success');
+    } catch (err) {
+      console.error(err);
+      alert('Unknown error — please try again');
+    }
+  };
+
+  const handleAddSlot = () => {
+    if (!slotDraft.start || !slotDraft.end) {
+      alert('Start and end times are required');
+      return;
+    }
+    if (slotDraft.start >= slotDraft.end) {
+      alert('End time must be after start time');
+      return;
+    }
+    const dup = formData.availability.some(
+      (s) => s.day === slotDraft.day && s.start === slotDraft.start
+    );
+    if (dup) {
+      alert('Duplicate day/start combination');
+      return;
+    }
+    setFormData({
+      ...formData,
+      availability: [...formData.availability, slotDraft]
+    });
+    // reset draft (keep same day for convenience)
+    setSlotDraft({ ...slotDraft, start: '', end: '' });
+  };
 
   //Handler function for going onto next step
   const handleNext = () => {
@@ -186,7 +253,7 @@ const ProviderSignup = () => {
           </p>
         </div>
 
-    {/*Number Navbar*/}
+        {/*Number Navbar*/}
         <div className="flex justify-between mb-8">
           {[1, 2, 3, 4].map((step) => (
             <div
@@ -194,19 +261,17 @@ const ProviderSignup = () => {
               className={`flex items-center ${step < 4 ? 'flex-1' : ''}`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  step <= currentStep
-                    ? 'bg-teal-600 text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${step <= currentStep
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-gray-200 text-gray-600'
+                  }`}
               >
                 {step}
               </div>
               {step < 4 && (
                 <div
-                  className={`flex-1 h-1 mx-2 ${
-                    step < currentStep ? 'bg-teal-600' : 'bg-gray-200'
-                  }`}
+                  className={`flex-1 h-1 mx-2 ${step < currentStep ? 'bg-teal-600' : 'bg-gray-200'
+                    }`}
                 />
               )}
             </div>
@@ -215,23 +280,94 @@ const ProviderSignup = () => {
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
           {/*Section 1*/}
-          {currentStep === 1 && 
-          (
+          {currentStep === 1 && (
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Full Name
+                  First Name
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 text-gray-400" />
                   <input
                     type="text"
                     required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     className="pl-10 w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600
                              dark:text-white focus:ring-2 focus:ring-teal-500"
                     placeholder="Your full name"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Last Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 text-gray-400" />
+                  <input
+                    type="text"
+                    required
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="pl-10 w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600
+                             dark:text-white focus:ring-2 focus:ring-teal-500"
+                    placeholder="Your full name"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 text-gray-400" />
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="pl-10 w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600
+                             dark:text-white focus:ring-2 focus:ring-teal-500"
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="pl-10 w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600
+                             dark:text-white focus:ring-2 focus:ring-teal-500"
+                    placeholder="••••••••"
+                    minLength={8}
+                  />
+                </div>
+                <p className="mt-1 text-sm text-gray-500">Password must be at least 8 characters long</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="pl-10 w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600
+                             dark:text-white focus:ring-2 focus:ring-teal-500"
+                    placeholder="••••••••"
                   />
                 </div>
               </div>
@@ -284,11 +420,10 @@ const ProviderSignup = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, providerType: 'individual' })}
-                    className={`p-4 rounded-lg border-2 text-left transition-all ${
-                      formData.providerType === 'individual'
-                        ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20'
-                        : 'border-gray-200 dark:border-gray-700'
-                    }`}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${formData.providerType === 'individual'
+                      ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20'
+                      : 'border-gray-200 dark:border-gray-700'
+                      }`}
                   >
                     <User className="w-6 h-6 mb-2 text-teal-600" />
                     <h3 className="font-medium">Individual</h3>
@@ -298,11 +433,10 @@ const ProviderSignup = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, providerType: 'business' })}
-                    className={`p-4 rounded-lg border-2 text-left transition-all ${
-                      formData.providerType === 'business'
-                        ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20'
-                        : 'border-gray-200 dark:border-gray-700'
-                    }`}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${formData.providerType === 'business'
+                      ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20'
+                      : 'border-gray-200 dark:border-gray-700'
+                      }`}
                   >
                     <Building2 className="w-6 h-6 mb-2 text-teal-600" />
                     <h3 className="font-medium">Business</h3>
@@ -376,12 +510,11 @@ const ProviderSignup = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, serviceType: 'driver' })}
-                    className={`p-4 rounded-lg border-2 text-left transition-all ${
-                      formData.serviceType === 'driver'
-                        ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20'
-                        : 'border-gray-200 dark:border-gray-700'
-                    }`}
+                    onClick={() => setFormData({ ...formData, serviceType: 'Driver' })}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${formData.serviceType === 'Driver'
+                      ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20'
+                      : 'border-gray-200 dark:border-gray-700'
+                      }`}
                   >
                     <Car className="w-6 h-6 mb-2 text-teal-600" />
                     <h3 className="font-medium">Driver</h3>
@@ -390,12 +523,11 @@ const ProviderSignup = () => {
 
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, serviceType: 'cleaning' })}
-                    className={`p-4 rounded-lg border-2 text-left transition-all ${
-                      formData.serviceType === 'cleaning'
-                        ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20'
-                        : 'border-gray-200 dark:border-gray-700'
-                    }`}
+                    onClick={() => setFormData({ ...formData, serviceType: 'Cleaning' })}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${formData.serviceType === 'Cleaning'
+                      ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20'
+                      : 'border-gray-200 dark:border-gray-700'
+                      }`}
                   >
                     <Sparkles className="w-6 h-6 mb-2 text-teal-600" />
                     <h3 className="font-medium">Cleaning</h3>
@@ -404,78 +536,75 @@ const ProviderSignup = () => {
                 </div>
               </div>
 
+              {/* ---------- Availability Slots ---------- */}
               <div>
                 <h3 className="text-lg font-medium mb-4">Availability</h3>
-                
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Available Days
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {Object.entries(formData.availability)
-                      .filter(([key]) => key !== 'timeSlots')
-                      .map(([day, isSelected]) => (
-                        <button
-                          key={day}
-                          type="button"
-                          onClick={() => setFormData({
-                            ...formData,
-                            availability: {
-                              ...formData.availability,
-                              [day]: !isSelected
-                            }
-                          })}
-                          className={`p-3 rounded-lg border-2 text-left transition-all ${
-                            isSelected
-                              ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20'
-                              : 'border-gray-200 dark:border-gray-700'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="capitalize">{day}</span>
-                            {isSelected && <Check className="w-4 h-4 text-teal-600" />}
-                          </div>
-                        </button>
-                      ))}
-                  </div>
+
+                {/* slot editor */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Day select */}
+                  <select
+                    className="p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    value={slotDraft.day}
+                    onChange={(e) => setSlotDraft({ ...slotDraft, day: Number(e.target.value) as Slot['day'] })}
+                  >
+                    <option value="">Day</option>
+                    {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                      .map((d, i) => <option key={i} value={i}>{d}</option>)}
+                  </select>
+
+                  {/* Start */}
+                  <input
+                    type="time"
+                    className="p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    value={slotDraft.start}
+                    onChange={(e) => setSlotDraft({ ...slotDraft, start: e.target.value })}
+                  />
+
+                  {/* End */}
+                  <input
+                    type="time"
+                    className="p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    value={slotDraft.end}
+                    onChange={(e) => setSlotDraft({ ...slotDraft, end: e.target.value })}
+                  />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Available Time Slots
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {Object.entries(formData.availability.timeSlots).map(([slot, isSelected]) => (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => setFormData({
-                          ...formData,
-                          availability: {
-                            ...formData.availability,
-                            timeSlots: {
-                              ...formData.availability.timeSlots,
-                              [slot]: !isSelected
-                            }
+                {/* Add-slot button */}
+                <button
+                  type="button"
+                  onClick={handleAddSlot}
+                  className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 mb-6"
+                >
+                  <Clock className="w-4 h-4 mr-2" />
+                  Add Slot
+                </button>
+
+                {/* list of added slots */}
+                {formData.availability.length > 0 && (
+                  <ul className="space-y-2">
+                    {formData.availability.map((s, idx) => (
+                      <li key={idx} className="flex justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <span>
+                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][s.day]}&nbsp;
+                          {s.start}–{s.end}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              availability: formData.availability.filter((_, i) => i !== idx)
+                            })
                           }
-                        })}
-                        className={`p-3 rounded-lg border-2 text-left transition-all ${
-                          isSelected
-                            ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20'
-                            : 'border-gray-200 dark:border-gray-700'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                            <span className="capitalize">{slot}</span>
-                          </div>
-                          {isSelected && <Check className="w-4 h-4 text-teal-600" />}
-                        </div>
-                      </button>
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </li>
                     ))}
-                  </div>
-                </div>
+                  </ul>
+                )}
               </div>
 
               <div>
@@ -494,41 +623,59 @@ const ProviderSignup = () => {
             </div>
           )}
 
-
           {/*Section 4*/}
           {currentStep === 4 && (
             <div className="space-y-6">
+              {/* ───────────────── Required documents ───────────────── */}
               <div>
                 <h3 className="text-lg font-medium mb-4">Required Documents</h3>
-                <div className="space-y-4">
-                  {/*Map for each Document Type*/}
-                  {Object.entries(formData.documents).map(([docType, isUploaded]) => (
-                    <div key={docType} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+
+                {(
+                  ['id', 'passport', 'criminalRecord', 'certifications'] as const
+                ).map((docKey) => {
+                  /* current state */
+                  const isUploaded = formData.documents?.[docKey] ?? false;
+
+                  /* human-friendly label */
+                  const labelMap: Record<typeof docKey, string> = {
+                    id: 'Government ID',
+                    passport: 'Passport',
+                    criminalRecord: 'Criminal Record',
+                    certifications: 'Certifications'
+                  };
+                  const pretty = labelMap[docKey];
+
+                  return (
+                    <div
+                      key={docKey}
+                      className="flex items-center justify-between p-4 mb-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    >
                       <div className="flex items-center">
                         <FileText className="w-5 h-5 text-teal-600 mr-3" />
                         <div>
-                          <p className="font-medium capitalize">{docType.replace(/([A-Z])/g, ' $1').trim()}</p>
+                          <p className="font-medium">{pretty}</p>
                           <p className="text-sm text-gray-500">
                             {isUploaded ? 'Document uploaded' : 'Upload required'}
                           </p>
                         </div>
                       </div>
+
+                      {/* toggle / upload button */}
                       <button
                         type="button"
-
-                        //TODO: Implement Back-End Check Here
-                        onClick={() => setFormData({
-                          ...formData,
-                          documents: {
-                            ...formData.documents,
-                            [docType]: true
-                          }
-                        })}
-                        className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-                          isUploaded
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-teal-600 text-white hover:bg-teal-700'
-                        }`}
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            documents: {
+                              ...prev.documents,
+                              [docKey]: !isUploaded          // toggle for demo
+                            }
+                          }))
+                        }
+                        className={`flex items-center px-4 py-2 rounded-lg transition-colors ${isUploaded
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-teal-600 text-white hover:bg-teal-700'
+                          }`}
                       >
                         {isUploaded ? (
                           <>
@@ -543,20 +690,27 @@ const ProviderSignup = () => {
                         )}
                       </button>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
 
+              {/* ───────────────── Terms checkbox ───────────────── */}
               <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"
                   id="terms"
                   checked={formData.acceptedTerms}
-                  onChange={(e) => setFormData({ ...formData, acceptedTerms: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, acceptedTerms: e.target.checked })
+                  }
                   className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                 />
-                <label htmlFor="terms" className="text-sm text-gray-700 dark:text-gray-300">
-                  I agree to the terms and conditions, including background checks and verification
+                <label
+                  htmlFor="terms"
+                  className="text-sm text-gray-700 dark:text-gray-300"
+                >
+                  I agree to the terms and conditions, including background checks and
+                  verification
                 </label>
               </div>
             </div>
@@ -574,7 +728,7 @@ const ProviderSignup = () => {
           )}
           <button
             type="button"
-            onClick = {currentStep === 4 ? submitForm : handleNext}
+            onClick={currentStep === 4 ? submitForm : handleNext}
             className="ml-auto flex items-center px-6 py-2 bg-teal-600 text-white rounded-lg 
                    hover:bg-teal-700">
             {currentStep === 4 ? 'Submit Application' : 'Next'}

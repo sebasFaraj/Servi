@@ -31,7 +31,7 @@ const ProviderSuccess = () => {
 
           {/*TODO: Ensure proper routing is /services and not another dashboard. UX problem*/}
           <button
-            onClick={() => navigate('/services')}
+            onClick={() => navigate('/services')} 
             className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition-colors"
           >
             Return to Home
@@ -43,3 +43,15 @@ const ProviderSuccess = () => {
 };
 
 export default ProviderSuccess;
+
+
+
+
+
+/*
+Users:
+
+Home -> Book Driver -> Car Choice -> Location/Pickup/Dropoff -> Payment -> Home 
+
+
+*/
