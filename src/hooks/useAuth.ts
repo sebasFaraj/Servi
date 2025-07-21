@@ -60,7 +60,7 @@ export function useAuth() {
         avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop',
         role
       };
-      
+
       updateLocalStorage(mockUser);
       setUser(mockUser);
       setError(null);
@@ -113,13 +113,13 @@ export function useAuth() {
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) throw new Error('No user logged in');
-    
+
     try {
       const updatedUser = { ...user, ...updates };
       if (updates.firstName || updates.lastName) {
         updatedUser.name = `${updates.firstName || user.firstName} ${updates.lastName || user.lastName}`.trim();
       }
-      
+
       updateLocalStorage(updatedUser);
       setUser(updatedUser);
       setError(null);
